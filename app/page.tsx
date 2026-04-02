@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Home() {
@@ -11,210 +11,213 @@ export default function Home() {
   const [isBotRunning, setIsBotRunning] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
   const [error, setError] = useState('');
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const terminalRef = useRef<HTMLDivElement>(null);
-  const eventSourceRef = useRef<EventSource | null>(null);
-
-  // جزيئات متطايرة
-  const [particles, setParticles] = useState<Array<{ id: number; left: string; delay: string; size: string }>>([]);
-
-  useEffect(() => {
-    const newParticles = [];
-    for (let i = 0; i < 50; i++) {
-      newParticles.push({
-        id: i,
-        left: `${Math.random() * 100}%`,
-        delay: `${Math.random() * 10}s`,
-        size: `${Math.random() * 5 + 2}px`,
-      });
-    }
-    setParticles(newParticles);
-  }, []);
-
-  useEffect(() => {
-    if (terminalRef.current) {
-      terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
-    }
-  }, [logs]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (password === 'RAGNAR-FF10-FREE') {
       setIsAuthenticated(true);
       setError('');
-      if (audioRef.current) {
-        audioRef.current.volume = 0.3;
-        audioRef.current.play().catch(console.log);
-      }
     } else {
       setError('Invalid access code');
     }
   };
 
-  const startBot = async () => {
+  const startBot = () => {
     if (!guestId || !guestPassword) {
       setError('Please enter GUEST ID and PASSWORD');
       return;
     }
-
     setIsBotRunning(true);
-    setLogs([]);
-    setError('');
-
-    try {
-      const saveRes = await fetch('/api/bot', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'save_credentials',
-          guest_id: guestId,
-          guest_password: guestPassword,
-        }),
-      });
-
-      const saveData = await saveRes.json();
-      
-      if (!saveRes.ok) {
-        throw new Error(saveData.error || 'Failed to save credentials');
-      }
-
-      setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ✓ Credentials saved for ID: ${guestId}`]);
-
-      const startRes = await fetch('/api/bot', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'start_bot' }),
-      });
-
-      const startData = await startRes.json();
-      
-      if (!startRes.ok) {
-        throw new Error(startData.error || 'Failed to start bot');
-      }
-
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-      }
-
-      const eventSource = new EventSource('/api/bot?action=stream_logs');
-      eventSourceRef.current = eventSource;
-
-      eventSource.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.log) {
-          setLogs((prev) => [...prev, `[${new Date().toLocaleTimeString()}] ${data.log}`]);
-        }
-        if (data.status === 'completed' || data.status === 'error') {
-          setIsBotRunning(false);
-          eventSource.close();
-        }
-      };
-
-      eventSource.onerror = () => {
-        setIsBotRunning(false);
-        eventSource.close();
-      };
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to start bot');
-      setIsBotRunning(false);
-    }
+    setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ✓ Bot started`]);
   };
 
-  const stopBot = async () => {
-    try {
-      await fetch('/api/bot', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'stop_bot' }),
-      });
-      setIsBotRunning(false);
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-      }
-      setLogs((prev) => [...prev, `[${new Date().toLocaleTimeString()}] ⚠ Bot stopped by user`]);
-    } catch (err) {
-      console.error('Failed to stop bot:', err);
-    }
+  const stopBot = () => {
+    setIsBotRunning(false);
+    setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ⏹️ Bot stopped`]);
   };
 
   return (
-    <div className="min-h-screen bg-black relative overflow-hidden">
-      {/* خلفية دوارة متحركة */}
-      <div className="rotating-gradient" />
-      
-      {/* جزيئات متطايرة */}
-      <div className="floating-particles">
-        {particles.map((particle) => (
-          <div
-            key={particle.id}
-            className="particle"
-            style={{
-              left: particle.left,
-              animationDelay: particle.delay,
-              width: particle.size,
-              height: particle.size,
-            }}
-          />
-        ))}
-      </div>
+    <div style={{ 
+      minHeight: '100vh', 
+      background: '#0a0a0a',
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
+      {/* الخلفية المتدرجة بنفس ألوان الصورة */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'radial-gradient(circle at 50% 50%, #ff0000, #8a2be2, #0a0a0a)',
+        opacity: 0.3,
+        zIndex: 0
+      }} />
 
-      <audio ref={audioRef} loop src="/ambient.mp3" />
+      {/* تأثير النيون المتحرك */}
+      <div style={{
+        position: 'fixed',
+        top: '20%',
+        left: '-20%',
+        width: '140%',
+        height: '60%',
+        background: 'linear-gradient(90deg, transparent, #ff0040, #00ffff, #ff00ff, transparent)',
+        filter: 'blur(60px)',
+        opacity: 0.15,
+        animation: 'slideNeon 8s ease-in-out infinite',
+        zIndex: 0
+      }} />
+
+      <style jsx>{`
+        @keyframes slideNeon {
+          0%, 100% { transform: translateX(-10%) translateY(0%); }
+          50% { transform: translateX(10%) translateY(5%); }
+        }
+        
+        @keyframes borderGlow {
+          0%, 100% { 
+            border-color: #ff0040;
+            box-shadow: 0 0 20px #ff0040, 0 0 40px #8a2be2;
+          }
+          50% { 
+            border-color: #00ffff;
+            box-shadow: 0 0 30px #00ffff, 0 0 60px #ff00ff;
+          }
+        }
+        
+        @keyframes buttonNeon {
+          0%, 100% { 
+            box-shadow: 0 0 15px #ff0040, 0 0 30px #8a2be2;
+            transform: scale(1);
+          }
+          50% { 
+            box-shadow: 0 0 25px #00ffff, 0 0 50px #ff00ff;
+            transform: scale(1.03);
+          }
+        }
+        
+        @keyframes textNeon {
+          0%, 100% { text-shadow: 0 0 8px #ff0040, 0 0 16px #8a2be2; }
+          50% { text-shadow: 0 0 12px #00ffff, 0 0 24px #ff00ff; }
+        }
+        
+        @keyframes pulseGlow {
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 0.8; }
+        }
+      `}</style>
 
       <AnimatePresence mode="wait">
         {!isAuthenticated ? (
           <motion.div
             key="login"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="relative z-10 flex items-center justify-center min-h-screen p-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            style={{
+              position: 'relative',
+              zIndex: 10,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: '100vh',
+              padding: '1rem'
+            }}
           >
-            <div className="neon-card w-full max-w-md">
-              <div className="relative bg-black/90 backdrop-blur-xl rounded-2xl p-8">
-                <div className="text-center mb-8">
-                  <h1 className="text-5xl font-bold neon-text mb-2">
-                    RAGNAR BOT
-                  </h1>
-                  <p className="text-gray-400 mt-2 animate-pulse">⚡ Free Fire Automation System ⚡</p>
-                </div>
-
-                <form onSubmit={handleLogin} className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-medium text-cyan-400 mb-2">
-                      ACCESS CODE
-                    </label>
-                    <input
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="neon-input w-full bg-gray-900 rounded-lg px-4 py-3 text-white focus:outline-none transition-all"
-                      placeholder="Enter RAGNAR-FF10-FREE"
-                      autoFocus
-                    />
-                  </div>
-
-                  {error && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="text-red-500 text-sm text-center animate-pulse"
-                    >
-                      ⚠️ {error}
-                    </motion.div>
-                  )}
-
-                  <button
-                    type="submit"
-                    className="neon-button-start w-full text-white font-bold py-3 rounded-lg transition-all transform hover:scale-105"
-                  >
-                    🚀 ENTER THE MATRIX 🚀
-                  </button>
-                </form>
-
-                <div className="mt-6 text-center text-xs text-gray-600">
-                  <p className="animate-pulse">🔥 RAGNAR LEGENDARY EDITION 🔥</p>
-                </div>
+            <div style={{
+              background: 'rgba(10, 10, 10, 0.9)',
+              backdropFilter: 'blur(20px)',
+              borderRadius: '2rem',
+              padding: '2.5rem',
+              width: '100%',
+              maxWidth: '26rem',
+              border: '2px solid',
+              borderColor: '#ff0040',
+              animation: 'borderGlow 2s ease-in-out infinite'
+            }}>
+              <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+                <div style={{
+                  width: '5rem',
+                  height: '5rem',
+                  margin: '0 auto 1.5rem',
+                  borderRadius: '1rem',
+                  background: 'linear-gradient(135deg, #ff0040, #8a2be2, #00ffff)',
+                  animation: 'pulseGlow 2s ease-in-out infinite'
+                }} />
+                
+                <h1 style={{
+                  fontSize: '2.5rem',
+                  fontWeight: 'bold',
+                  color: '#00ffff',
+                  animation: 'textNeon 2s ease-in-out infinite',
+                  letterSpacing: '0.1em'
+                }}>
+                  ACCESS CODE
+                </h1>
               </div>
+
+              <form onSubmit={handleLogin}>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  style={{
+                    width: '100%',
+                    background: 'rgba(0, 0, 0, 0.6)',
+                    border: '1px solid #ff0040',
+                    borderRadius: '1rem',
+                    padding: '1rem 1.5rem',
+                    color: '#00ffff',
+                    fontSize: '1.1rem',
+                    textAlign: 'center',
+                    letterSpacing: '0.05em',
+                    marginBottom: '1.5rem',
+                    outline: 'none',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = '#00ffff';
+                    e.target.style.boxShadow = '0 0 20px #00ffff';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = '#ff0040';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                  placeholder="••••••••••••••"
+                />
+
+                {error && (
+                  <div style={{
+                    color: '#ff0040',
+                    textAlign: 'center',
+                    marginBottom: '1rem',
+                    fontSize: '0.875rem',
+                    animation: 'textNeon 1s ease-in-out infinite'
+                  }}>
+                    ⚠ {error}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  style={{
+                    width: '100%',
+                    background: 'linear-gradient(135deg, #ff0040, #8a2be2)',
+                    color: 'white',
+                    fontWeight: 'bold',
+                    padding: '1rem',
+                    borderRadius: '1rem',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '1rem',
+                    letterSpacing: '0.1em',
+                    animation: 'buttonNeon 2s ease-in-out infinite'
+                  }}
+                >
+                  VERIFY
+                </button>
+              </form>
             </div>
           </motion.div>
         ) : (
@@ -223,148 +226,225 @@ export default function Home() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="relative z-10 min-h-screen p-6"
+            style={{
+              position: 'relative',
+              zIndex: 10,
+              minHeight: '100vh',
+              padding: '2rem'
+            }}
           >
-            <div className="max-w-7xl mx-auto">
+            <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
+              {/* Header */}
               <motion.div
-                initial={{ y: -50 }}
+                initial={{ y: -30 }}
                 animate={{ y: 0 }}
-                className="text-center mb-8"
+                style={{ textAlign: 'center', marginBottom: '3rem' }}
               >
-                <h1 className="text-6xl font-bold neon-text mb-2">
-                  RAGNAR BOT MANAGER
-                </h1>
-                <p className="text-gray-400 mt-2 text-lg animate-pulse">
-                  ⚡ Legendary Edition | Free Fire Automation ⚡
-                </p>
+                <div style={{
+                  width: '6rem',
+                  height: '6rem',
+                  margin: '0 auto 1rem',
+                  borderRadius: '1.5rem',
+                  background: 'linear-gradient(135deg, #ff0040, #8a2be2, #00ffff)',
+                  animation: 'pulseGlow 2s ease-in-out infinite'
+                }} />
               </motion.div>
 
-              <div className="grid lg:grid-cols-2 gap-8">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
                 {/* Left Panel */}
-                <motion.div
-                  initial={{ x: -50, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 0.1 }}
-                  className="neon-card"
-                >
-                  <div className="relative bg-black/90 backdrop-blur-xl rounded-2xl p-6">
-                    <h2 className="text-2xl font-bold text-cyan-400 mb-6 flex items-center gap-2 animate-pulse">
-                      <span className="w-3 h-3 bg-cyan-500 rounded-full animate-ping" />
-                      🔐 GUEST CREDENTIALS
+                <div style={{
+                  background: 'rgba(10, 10, 10, 0.9)',
+                  backdropFilter: 'blur(20px)',
+                  borderRadius: '1.5rem',
+                  padding: '2rem',
+                  border: '2px solid',
+                  borderColor: '#ff0040',
+                  animation: 'borderGlow 2s ease-in-out infinite'
+                }}>
+                  <div style={{ marginBottom: '2rem' }}>
+                    <div style={{
+                      width: '3rem',
+                      height: '0.25rem',
+                      background: 'linear-gradient(90deg, #ff0040, #00ffff)',
+                      marginBottom: '1rem'
+                    }} />
+                    <h2 style={{
+                      fontSize: '1.5rem',
+                      color: '#00ffff',
+                      animation: 'textNeon 2s ease-in-out infinite'
+                    }}>
+                      CREDENTIALS
                     </h2>
-
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                          GUEST ID
-                        </label>
-                        <input
-                          type="text"
-                          value={guestId}
-                          onChange={(e) => setGuestId(e.target.value)}
-                          className="neon-input w-full bg-gray-900 rounded-lg px-4 py-3 text-white focus:outline-none transition-all"
-                          placeholder="Enter Guest ID"
-                          disabled={isBotRunning}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                          GUEST PASSWORD
-                        </label>
-                        <input
-                          type="password"
-                          value={guestPassword}
-                          onChange={(e) => setGuestPassword(e.target.value)}
-                          className="neon-input w-full bg-gray-900 rounded-lg px-4 py-3 text-white focus:outline-none transition-all"
-                          placeholder="Enter Guest Password"
-                          disabled={isBotRunning}
-                        />
-                      </div>
-
-                      <div className="flex gap-4 pt-4">
-                        <button
-                          onClick={startBot}
-                          disabled={isBotRunning}
-                          className="neon-button-start flex-1 text-white font-bold py-3 rounded-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {isBotRunning ? '⚡ BOT RUNNING...' : '🚀 START BOT'}
-                        </button>
-
-                        <button
-                          onClick={stopBot}
-                          disabled={!isBotRunning}
-                          className="neon-button-stop flex-1 text-white font-bold py-3 rounded-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          ⏹️ STOP BOT
-                        </button>
-                      </div>
-
-                      {error && (
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="bg-red-500/20 border-2 border-red-500 rounded-lg p-3 text-red-400 text-sm animate-pulse"
-                        >
-                          ⚠️ {error}
-                        </motion.div>
-                      )}
-                    </div>
                   </div>
-                </motion.div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <div>
+                      <label style={{ display: 'block', color: '#8a2be2', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
+                        GUEST ID
+                      </label>
+                      <input
+                        type="text"
+                        value={guestId}
+                        onChange={(e) => setGuestId(e.target.value)}
+                        style={{
+                          width: '100%',
+                          background: 'rgba(0, 0, 0, 0.6)',
+                          border: '1px solid #ff0040',
+                          borderRadius: '0.75rem',
+                          padding: '0.75rem 1rem',
+                          color: '#00ffff',
+                          outline: 'none'
+                        }}
+                        disabled={isBotRunning}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', color: '#8a2be2', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
+                        GUEST PASSWORD
+                      </label>
+                      <input
+                        type="password"
+                        value={guestPassword}
+                        onChange={(e) => setGuestPassword(e.target.value)}
+                        style={{
+                          width: '100%',
+                          background: 'rgba(0, 0, 0, 0.6)',
+                          border: '1px solid #ff0040',
+                          borderRadius: '0.75rem',
+                          padding: '0.75rem 1rem',
+                          color: '#00ffff',
+                          outline: 'none'
+                        }}
+                        disabled={isBotRunning}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '1rem', paddingTop: '1rem' }}>
+                      <button
+                        onClick={startBot}
+                        disabled={isBotRunning}
+                        style={{
+                          flex: 1,
+                          background: 'linear-gradient(135deg, #ff0040, #8a2be2)',
+                          color: 'white',
+                          fontWeight: 'bold',
+                          padding: '0.875rem',
+                          borderRadius: '0.75rem',
+                          border: 'none',
+                          cursor: 'pointer',
+                          animation: 'buttonNeon 2s ease-in-out infinite'
+                        }}
+                      >
+                        {isBotRunning ? 'ACTIVE' : 'START'}
+                      </button>
+
+                      <button
+                        onClick={stopBot}
+                        disabled={!isBotRunning}
+                        style={{
+                          flex: 1,
+                          background: 'linear-gradient(135deg, #8a2be2, #ff0040)',
+                          color: 'white',
+                          fontWeight: 'bold',
+                          padding: '0.875rem',
+                          borderRadius: '0.75rem',
+                          border: 'none',
+                          cursor: 'pointer',
+                          animation: 'buttonNeon 2s ease-in-out infinite'
+                        }}
+                      >
+                        STOP
+                      </button>
+                    </div>
+
+                    {error && (
+                      <div style={{
+                        background: 'rgba(255, 0, 64, 0.1)',
+                        border: '1px solid #ff0040',
+                        borderRadius: '0.75rem',
+                        padding: '0.75rem',
+                        color: '#ff0040',
+                        textAlign: 'center'
+                      }}>
+                        ⚠ {error}
+                      </div>
+                    )}
+                  </div>
+                </div>
 
                 {/* Right Panel - Terminal */}
-                <motion.div
-                  initial={{ x: 50, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                  className="neon-card"
-                >
-                  <div className="relative bg-black/90 backdrop-blur-xl rounded-2xl p-6">
-                    <h2 className="text-2xl font-bold text-red-400 mb-6 flex items-center gap-2 animate-pulse">
-                      <span className="w-3 h-3 bg-red-500 rounded-full animate-ping" />
-                      💻 LIVE TERMINAL
+                <div style={{
+                  background: 'rgba(10, 10, 10, 0.9)',
+                  backdropFilter: 'blur(20px)',
+                  borderRadius: '1.5rem',
+                  padding: '2rem',
+                  border: '2px solid',
+                  borderColor: '#8a2be2',
+                  animation: 'borderGlow 2s ease-in-out infinite'
+                }}>
+                  <div style={{ marginBottom: '2rem' }}>
+                    <div style={{
+                      width: '3rem',
+                      height: '0.25rem',
+                      background: 'linear-gradient(90deg, #8a2be2, #ff00ff)',
+                      marginBottom: '1rem'
+                    }} />
+                    <h2 style={{
+                      fontSize: '1.5rem',
+                      color: '#ff00ff',
+                      animation: 'textNeon 2s ease-in-out infinite'
+                    }}>
+                      TERMINAL
                     </h2>
-
-                    <div
-                      ref={terminalRef}
-                      className="neon-terminal rounded-lg p-4 h-96 overflow-y-auto font-mono text-sm"
-                    >
-                      {logs.length === 0 ? (
-                        <div className="text-gray-500 text-center mt-32">
-                          <p className="animate-pulse">┌─[ System Ready ]</p>
-                          <p className="animate-pulse">└─► Enter credentials and click START</p>
-                        </div>
-                      ) : (
-                        logs.map((log, idx) => (
-                          <motion.div
-                            key={idx}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            className={`${
-                              log.includes('ERROR') ? 'text-red-400 animate-pulse' : 
-                              log.includes('✓') ? 'text-green-400' : 
-                              log.includes('⚠') ? 'text-yellow-400' :
-                              'text-cyan-400'
-                            } mb-1`}
-                          >
-                            {log}
-                          </motion.div>
-                        ))
-                      )}
-                      {isBotRunning && (
-                        <div className="text-yellow-400 animate-pulse mt-2">
-                          ⚡ Bot is processing... ⚡
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="mt-4 text-xs text-gray-500 text-center">
-                      <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-ping mr-2" />
-                      <span className="animate-pulse">⚡ LIVE CONNECTION ACTIVE ⚡</span>
-                    </div>
                   </div>
-                </motion.div>
+
+                  <div style={{
+                    background: '#000000',
+                    borderRadius: '1rem',
+                    padding: '1rem',
+                    height: '24rem',
+                    overflowY: 'auto',
+                    fontFamily: 'monospace',
+                    fontSize: '0.875rem',
+                    border: '1px solid #8a2be2'
+                  }}>
+                    {logs.length === 0 ? (
+                      <div style={{ color: '#8a2be2', textAlign: 'center', marginTop: '8rem' }}>
+                        <span style={{ animation: 'pulseGlow 2s ease-in-out infinite', display: 'inline-block' }}>
+                          ●
+                        </span>
+                      </div>
+                    ) : (
+                      logs.map((log, idx) => (
+                        <div key={idx} style={{
+                          color: log.includes('✓') ? '#00ffff' : '#ff00ff',
+                          marginBottom: '0.5rem'
+                        }}>
+                          {log}
+                        </div>
+                      ))
+                    )}
+                    {isBotRunning && (
+                      <div style={{ color: '#00ffff', animation: 'pulseGlow 1s ease-in-out infinite', marginTop: '0.5rem' }}>
+                        ● PROCESSING
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+                    <span style={{
+                      display: 'inline-block',
+                      width: '0.5rem',
+                      height: '0.5rem',
+                      background: '#00ffff',
+                      borderRadius: '50%',
+                      animation: 'pulseGlow 1s ease-in-out infinite',
+                      marginRight: '0.5rem'
+                    }} />
+                    <span style={{ color: '#8a2be2', fontSize: '0.75rem' }}>● LIVE</span>
+                  </div>
+                </div>
               </div>
             </div>
           </motion.div>
