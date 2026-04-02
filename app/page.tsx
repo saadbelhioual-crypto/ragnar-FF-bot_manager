@@ -15,20 +15,33 @@ export default function Home() {
   const terminalRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
 
-  // Auto-scroll terminal
+  // جزيئات متطايرة
+  const [particles, setParticles] = useState<Array<{ id: number; left: string; delay: string; size: string }>>([]);
+
+  useEffect(() => {
+    const newParticles = [];
+    for (let i = 0; i < 50; i++) {
+      newParticles.push({
+        id: i,
+        left: `${Math.random() * 100}%`,
+        delay: `${Math.random() * 10}s`,
+        size: `${Math.random() * 5 + 2}px`,
+      });
+    }
+    setParticles(newParticles);
+  }, []);
+
   useEffect(() => {
     if (terminalRef.current) {
       terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
     }
   }, [logs]);
 
-  // Handle authentication
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (password === 'RAGNAR-FF10-FREE') {
       setIsAuthenticated(true);
       setError('');
-      // Auto-play music
       if (audioRef.current) {
         audioRef.current.volume = 0.3;
         audioRef.current.play().catch(console.log);
@@ -38,7 +51,6 @@ export default function Home() {
     }
   };
 
-  // Start bot
   const startBot = async () => {
     if (!guestId || !guestPassword) {
       setError('Please enter GUEST ID and PASSWORD');
@@ -50,7 +62,6 @@ export default function Home() {
     setError('');
 
     try {
-      // Save credentials
       const saveRes = await fetch('/api/bot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -61,18 +72,26 @@ export default function Home() {
         }),
       });
 
-      if (!saveRes.ok) throw new Error('Failed to save credentials');
+      const saveData = await saveRes.json();
+      
+      if (!saveRes.ok) {
+        throw new Error(saveData.error || 'Failed to save credentials');
+      }
 
-      // Start bot process
+      setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ✓ Credentials saved for ID: ${guestId}`]);
+
       const startRes = await fetch('/api/bot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'start_bot' }),
       });
 
-      if (!startRes.ok) throw new Error('Failed to start bot');
+      const startData = await startRes.json();
+      
+      if (!startRes.ok) {
+        throw new Error(startData.error || 'Failed to start bot');
+      }
 
-      // Connect to SSE for live logs
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
       }
@@ -101,7 +120,6 @@ export default function Home() {
     }
   };
 
-  // Stop bot
   const stopBot = async () => {
     try {
       await fetch('/api/bot', {
@@ -113,7 +131,7 @@ export default function Home() {
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
       }
-      setLogs((prev) => [...prev, '[SYSTEM] Bot stopped by user']);
+      setLogs((prev) => [...prev, `[${new Date().toLocaleTimeString()}] ⚠ Bot stopped by user`]);
     } catch (err) {
       console.error('Failed to stop bot:', err);
     }
@@ -121,17 +139,29 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-black relative overflow-hidden">
-      {/* 360° Rotating Conic Gradient Background */}
-      <div className="fixed inset-0 opacity-30">
-        <div className="absolute inset-0 rotate-conic" style={{ filter: 'blur(100px)' }} />
+      {/* خلفية دوارة متحركة */}
+      <div className="rotating-gradient" />
+      
+      {/* جزيئات متطايرة */}
+      <div className="floating-particles">
+        {particles.map((particle) => (
+          <div
+            key={particle.id}
+            className="particle"
+            style={{
+              left: particle.left,
+              animationDelay: particle.delay,
+              width: particle.size,
+              height: particle.size,
+            }}
+          />
+        ))}
       </div>
 
-      {/* Audio Element */}
       <audio ref={audioRef} loop src="/ambient.mp3" />
 
       <AnimatePresence mode="wait">
         {!isAuthenticated ? (
-          // Phase 1: Security Login Card
           <motion.div
             key="login"
             initial={{ opacity: 0, scale: 0.9 }}
@@ -139,14 +169,13 @@ export default function Home() {
             exit={{ opacity: 0, scale: 0.9 }}
             className="relative z-10 flex items-center justify-center min-h-screen p-4"
           >
-            <div className="relative">
-              <div className="absolute -inset-1 bg-gradient-to-r from-red-600 via-blue-600 to-cyan-600 rounded-2xl blur-xl opacity-75 animate-pulse" />
-              <div className="relative bg-black/90 backdrop-blur-xl rounded-2xl p-8 border border-cyan-500/30 shadow-2xl w-full max-w-md">
+            <div className="neon-card w-full max-w-md">
+              <div className="relative bg-black/90 backdrop-blur-xl rounded-2xl p-8">
                 <div className="text-center mb-8">
-                  <h1 className="text-4xl font-bold glow-text bg-gradient-to-r from-red-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent">
+                  <h1 className="text-5xl font-bold neon-text mb-2">
                     RAGNAR BOT
                   </h1>
-                  <p className="text-gray-400 mt-2">Free Fire Automation System</p>
+                  <p className="text-gray-400 mt-2 animate-pulse">⚡ Free Fire Automation System ⚡</p>
                 </div>
 
                 <form onSubmit={handleLogin} className="space-y-6">
@@ -158,8 +187,8 @@ export default function Home() {
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full bg-gray-900 border border-red-500/50 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/50 transition-all"
-                      placeholder="Enter your access code"
+                      className="neon-input w-full bg-gray-900 rounded-lg px-4 py-3 text-white focus:outline-none transition-all"
+                      placeholder="Enter RAGNAR-FF10-FREE"
                       autoFocus
                     />
                   </div>
@@ -168,28 +197,27 @@ export default function Home() {
                     <motion.div
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="text-red-500 text-sm text-center"
+                      className="text-red-500 text-sm text-center animate-pulse"
                     >
-                      {error}
+                      ⚠️ {error}
                     </motion.div>
                   )}
 
                   <button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-red-600 to-blue-600 hover:from-red-500 hover:to-blue-500 text-white font-bold py-3 rounded-lg transition-all transform hover:scale-105 shadow-lg"
+                    className="neon-button-start w-full text-white font-bold py-3 rounded-lg transition-all transform hover:scale-105"
                   >
-                    ENTER THE MATRIX
+                    🚀 ENTER THE MATRIX 🚀
                   </button>
                 </form>
 
                 <div className="mt-6 text-center text-xs text-gray-600">
-                  <p>⚡ RAGNAR EDITION ⚡</p>
+                  <p className="animate-pulse">🔥 RAGNAR LEGENDARY EDITION 🔥</p>
                 </div>
               </div>
             </div>
           </motion.div>
         ) : (
-          // Phase 2-4: Main Panel
           <motion.div
             key="panel"
             initial={{ opacity: 0 }}
@@ -198,87 +226,90 @@ export default function Home() {
             className="relative z-10 min-h-screen p-6"
           >
             <div className="max-w-7xl mx-auto">
-              {/* Header */}
               <motion.div
                 initial={{ y: -50 }}
                 animate={{ y: 0 }}
                 className="text-center mb-8"
               >
-                <h1 className="text-5xl font-bold glow-text bg-gradient-to-r from-red-500 via-cyan-500 to-blue-500 bg-clip-text text-transparent">
+                <h1 className="text-6xl font-bold neon-text mb-2">
                   RAGNAR BOT MANAGER
                 </h1>
-                <p className="text-gray-400 mt-2">Legendary Edition | Free Fire Automation</p>
+                <p className="text-gray-400 mt-2 text-lg animate-pulse">
+                  ⚡ Legendary Edition | Free Fire Automation ⚡
+                </p>
               </motion.div>
 
-              <div className="grid lg:grid-cols-2 gap-6">
-                {/* Left Panel - Credentials */}
+              <div className="grid lg:grid-cols-2 gap-8">
+                {/* Left Panel */}
                 <motion.div
                   initial={{ x: -50, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: 0.1 }}
-                  className="bg-black/80 backdrop-blur-xl rounded-2xl border border-cyan-500/30 p-6 neon-border"
+                  className="neon-card"
                 >
-                  <h2 className="text-2xl font-bold text-cyan-400 mb-6 flex items-center gap-2">
-                    <span className="w-2 h-2 bg-cyan-500 rounded-full animate-pulse" />
-                    GUEST CREDENTIALS
-                  </h2>
+                  <div className="relative bg-black/90 backdrop-blur-xl rounded-2xl p-6">
+                    <h2 className="text-2xl font-bold text-cyan-400 mb-6 flex items-center gap-2 animate-pulse">
+                      <span className="w-3 h-3 bg-cyan-500 rounded-full animate-ping" />
+                      🔐 GUEST CREDENTIALS
+                    </h2>
 
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        GUEST ID
-                      </label>
-                      <input
-                        type="text"
-                        value={guestId}
-                        onChange={(e) => setGuestId(e.target.value)}
-                        className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/50 transition-all"
-                        placeholder="Enter Guest ID"
-                        disabled={isBotRunning}
-                      />
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          GUEST ID
+                        </label>
+                        <input
+                          type="text"
+                          value={guestId}
+                          onChange={(e) => setGuestId(e.target.value)}
+                          className="neon-input w-full bg-gray-900 rounded-lg px-4 py-3 text-white focus:outline-none transition-all"
+                          placeholder="Enter Guest ID"
+                          disabled={isBotRunning}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          GUEST PASSWORD
+                        </label>
+                        <input
+                          type="password"
+                          value={guestPassword}
+                          onChange={(e) => setGuestPassword(e.target.value)}
+                          className="neon-input w-full bg-gray-900 rounded-lg px-4 py-3 text-white focus:outline-none transition-all"
+                          placeholder="Enter Guest Password"
+                          disabled={isBotRunning}
+                        />
+                      </div>
+
+                      <div className="flex gap-4 pt-4">
+                        <button
+                          onClick={startBot}
+                          disabled={isBotRunning}
+                          className="neon-button-start flex-1 text-white font-bold py-3 rounded-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isBotRunning ? '⚡ BOT RUNNING...' : '🚀 START BOT'}
+                        </button>
+
+                        <button
+                          onClick={stopBot}
+                          disabled={!isBotRunning}
+                          className="neon-button-stop flex-1 text-white font-bold py-3 rounded-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          ⏹️ STOP BOT
+                        </button>
+                      </div>
+
+                      {error && (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="bg-red-500/20 border-2 border-red-500 rounded-lg p-3 text-red-400 text-sm animate-pulse"
+                        >
+                          ⚠️ {error}
+                        </motion.div>
+                      )}
                     </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        GUEST PASSWORD
-                      </label>
-                      <input
-                        type="password"
-                        value={guestPassword}
-                        onChange={(e) => setGuestPassword(e.target.value)}
-                        className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/50 transition-all"
-                        placeholder="Enter Guest Password"
-                        disabled={isBotRunning}
-                      />
-                    </div>
-
-                    <div className="flex gap-4 pt-4">
-                      <button
-                        onClick={startBot}
-                        disabled={isBotRunning}
-                        className="flex-1 bg-gradient-to-r from-green-600 to-cyan-600 hover:from-green-500 hover:to-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg transition-all transform hover:scale-105"
-                      >
-                        {isBotRunning ? '⚡ BOT RUNNING...' : '🚀 START BOT'}
-                      </button>
-
-                      <button
-                        onClick={stopBot}
-                        disabled={!isBotRunning}
-                        className="flex-1 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg transition-all transform hover:scale-105"
-                      >
-                        ⏹️ STOP BOT
-                      </button>
-                    </div>
-
-                    {error && (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 text-red-400 text-sm"
-                      >
-                        ⚠️ {error}
-                      </motion.div>
-                    )}
                   </div>
                 </motion.div>
 
@@ -287,44 +318,51 @@ export default function Home() {
                   initial={{ x: 50, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: 0.2 }}
-                  className="bg-black/80 backdrop-blur-xl rounded-2xl border border-red-500/30 p-6 neon-border"
+                  className="neon-card"
                 >
-                  <h2 className="text-2xl font-bold text-red-400 mb-6 flex items-center gap-2">
-                    <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                    LIVE TERMINAL
-                  </h2>
+                  <div className="relative bg-black/90 backdrop-blur-xl rounded-2xl p-6">
+                    <h2 className="text-2xl font-bold text-red-400 mb-6 flex items-center gap-2 animate-pulse">
+                      <span className="w-3 h-3 bg-red-500 rounded-full animate-ping" />
+                      💻 LIVE TERMINAL
+                    </h2>
 
-                  <div
-                    ref={terminalRef}
-                    className="terminal-bg rounded-lg p-4 h-96 overflow-y-auto font-mono text-sm"
-                  >
-                    {logs.length === 0 ? (
-                      <div className="text-gray-500 text-center mt-32">
-                        <p>┌─[ Waiting for bot to start ]</p>
-                        <p>└─► System ready. Enter credentials and click START.</p>
-                      </div>
-                    ) : (
-                      logs.map((log, idx) => (
-                        <motion.div
-                          key={idx}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          className={`${log.includes('ERROR') ? 'text-red-400' : log.includes('SUCCESS') ? 'text-green-400' : 'text-cyan-400'} mb-1`}
-                        >
-                          {log}
-                        </motion.div>
-                      ))
-                    )}
-                    {isBotRunning && (
-                      <div className="text-yellow-400 animate-pulse mt-2">
-                        ⚡ Bot is processing...
-                      </div>
-                    )}
-                  </div>
+                    <div
+                      ref={terminalRef}
+                      className="neon-terminal rounded-lg p-4 h-96 overflow-y-auto font-mono text-sm"
+                    >
+                      {logs.length === 0 ? (
+                        <div className="text-gray-500 text-center mt-32">
+                          <p className="animate-pulse">┌─[ System Ready ]</p>
+                          <p className="animate-pulse">└─► Enter credentials and click START</p>
+                        </div>
+                      ) : (
+                        logs.map((log, idx) => (
+                          <motion.div
+                            key={idx}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className={`${
+                              log.includes('ERROR') ? 'text-red-400 animate-pulse' : 
+                              log.includes('✓') ? 'text-green-400' : 
+                              log.includes('⚠') ? 'text-yellow-400' :
+                              'text-cyan-400'
+                            } mb-1`}
+                          >
+                            {log}
+                          </motion.div>
+                        ))
+                      )}
+                      {isBotRunning && (
+                        <div className="text-yellow-400 animate-pulse mt-2">
+                          ⚡ Bot is processing... ⚡
+                        </div>
+                      )}
+                    </div>
 
-                  <div className="mt-4 text-xs text-gray-500 text-center">
-                    <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse mr-2" />
-                    LIVE CONNECTION ACTIVE
+                    <div className="mt-4 text-xs text-gray-500 text-center">
+                      <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-ping mr-2" />
+                      <span className="animate-pulse">⚡ LIVE CONNECTION ACTIVE ⚡</span>
+                    </div>
                   </div>
                 </motion.div>
               </div>
