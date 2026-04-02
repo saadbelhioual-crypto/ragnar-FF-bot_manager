@@ -9,29 +9,291 @@
 }
 
 @layer utilities {
-  .rotate-conic {
-    background: conic-gradient(from 0deg, #ff0040, #00ffff, #0040ff, #ff0040);
-    animation: rotate 8s linear infinite;
+  /* خلفية دوارة 360 درجة بألوان نارية */
+  .rotating-gradient {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(
+      45deg,
+      #ff0000,
+      #ff00ff,
+      #00ffff,
+      #ff0000,
+      #ff6600,
+      #ff00ff,
+      #00ffff,
+      #ff0000
+    );
+    background-size: 400% 400%;
+    animation: rotateBg 3s ease infinite;
+    filter: blur(80px);
+    opacity: 0.4;
   }
   
-  @keyframes rotate {
-    from {
-      transform: rotate(0deg);
+  @keyframes rotateBg {
+    0% {
+      background-position: 0% 50%;
     }
-    to {
-      transform: rotate(360deg);
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
     }
   }
   
-  .glow-text {
-    text-shadow: 0 0 10px rgba(0, 255, 255, 0.8), 0 0 20px rgba(255, 0, 0, 0.5);
+  /* نيون متحرك للبطاقات */
+  .neon-card {
+    position: relative;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(20px);
+    border-radius: 1.5rem;
+    animation: borderPulse 1.5s ease-in-out infinite;
   }
   
-  .neon-border {
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.5), inset 0 0 10px rgba(0, 255, 255, 0.2);
+  .neon-card::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(
+      90deg,
+      #ff0000,
+      #ff00ff,
+      #00ffff,
+      #ff0000,
+      #ff00ff,
+      #00ffff
+    );
+    background-size: 200% 100%;
+    border-radius: 1.5rem;
+    z-index: -1;
+    animation: borderMove 2s linear infinite;
+    filter: blur(8px);
   }
   
-  .terminal-bg {
-    background: linear-gradient(180deg, #0a0a0a 0%, #000000 100%);
+  @keyframes borderPulse {
+    0%, 100% {
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.5),
+                  0 0 40px rgba(0, 255, 255, 0.3),
+                  inset 0 0 20px rgba(255, 0, 255, 0.2);
+    }
+    50% {
+      box-shadow: 0 0 40px rgba(0, 255, 255, 0.7),
+                  0 0 60px rgba(255, 0, 0, 0.5),
+                  inset 0 0 30px rgba(0, 255, 255, 0.3);
+    }
+  }
+  
+  @keyframes borderMove {
+    0% {
+      background-position: 0% 50%;
+    }
+    100% {
+      background-position: 200% 50%;
+    }
+  }
+  
+  /* نص نيون خنفشاري */
+  .neon-text {
+    animation: textFlicker 2s ease-in-out infinite;
+    background: linear-gradient(
+      135deg,
+      #ff0000,
+      #ff00ff,
+      #00ffff,
+      #ff6600,
+      #ff0000
+    );
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: gradientShift 3s ease infinite;
+  }
+  
+  @keyframes gradientShift {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+  
+  @keyframes textFlicker {
+    0%, 100% {
+      text-shadow: 0 0 10px #ff0000,
+                   0 0 20px #ff00ff,
+                   0 0 30px #00ffff;
+    }
+    50% {
+      text-shadow: 0 0 20px #ff00ff,
+                   0 0 40px #00ffff,
+                   0 0 60px #ff0000;
+    }
+  }
+  
+  /* ازرار نيون متحركة */
+  .neon-button-start {
+    background: linear-gradient(135deg, #ff0000, #ff00ff);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    animation: buttonPulse 1s ease-in-out infinite;
+  }
+  
+  .neon-button-start::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(90deg, #ff0000, #ff00ff, #00ffff, #ff0000);
+    background-size: 300% 100%;
+    border-radius: 0.5rem;
+    z-index: -1;
+    animation: buttonBorder 2s linear infinite;
+    filter: blur(5px);
+  }
+  
+  .neon-button-stop {
+    background: linear-gradient(135deg, #ff3300, #ff0066);
+    position: relative;
+    overflow: hidden;
+    animation: buttonPulse 1.5s ease-in-out infinite;
+  }
+  
+  .neon-button-stop::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(90deg, #ff3300, #ff0066, #ff00ff, #ff3300);
+    background-size: 300% 100%;
+    border-radius: 0.5rem;
+    z-index: -1;
+    animation: buttonBorder 2s linear infinite reverse;
+    filter: blur(5px);
+  }
+  
+  @keyframes buttonPulse {
+    0%, 100% {
+      transform: scale(1);
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+    }
+    50% {
+      transform: scale(1.05);
+      box-shadow: 0 0 40px rgba(255, 0, 255, 0.8);
+    }
+  }
+  
+  @keyframes buttonBorder {
+    0% {
+      background-position: 0% 50%;
+    }
+    100% {
+      background-position: 300% 50%;
+    }
+  }
+  
+  /* تايمينال نيون */
+  .neon-terminal {
+    background: rgba(0, 0, 0, 0.95);
+    border: 2px solid;
+    border-image: linear-gradient(135deg, #ff0000, #00ffff, #ff00ff) 1;
+    animation: terminalGlow 1s ease-in-out infinite;
+    box-shadow: inset 0 0 30px rgba(0, 255, 255, 0.1),
+                0 0 30px rgba(255, 0, 0, 0.2);
+  }
+  
+  @keyframes terminalGlow {
+    0%, 100% {
+      border-color: #ff0000;
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+    }
+    33% {
+      border-color: #ff00ff;
+      box-shadow: 0 0 30px rgba(255, 0, 255, 0.4);
+    }
+    66% {
+      border-color: #00ffff;
+      box-shadow: 0 0 30px rgba(0, 255, 255, 0.4);
+    }
+  }
+  
+  /* انبوتات نيون */
+  .neon-input {
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid;
+    transition: all 0.3s ease;
+    animation: inputPulse 2s ease-in-out infinite;
+  }
+  
+  .neon-input:focus {
+    animation: inputFocus 0.5s ease;
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+    border-color: #00ffff;
+  }
+  
+  @keyframes inputPulse {
+    0%, 100% {
+      border-color: #ff0000;
+      box-shadow: 0 0 5px rgba(255, 0, 0, 0.3);
+    }
+    50% {
+      border-color: #00ffff;
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+    }
+  }
+  
+  @keyframes inputFocus {
+    0% {
+      transform: scale(1);
+    }
+    100% {
+      transform: scale(1.02);
+    }
+  }
+  
+  /* جزيئات متطايرة */
+  .floating-particles {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+  
+  .particle {
+    position: absolute;
+    background: linear-gradient(135deg, #ff0000, #00ffff);
+    border-radius: 50%;
+    animation: float 8s infinite ease-in-out;
+    opacity: 0.6;
+  }
+  
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0) rotate(0deg);
+      opacity: 0;
+    }
+    10% {
+      opacity: 0.6;
+    }
+    90% {
+      opacity: 0.6;
+    }
+    100% {
+      transform: translateY(-100vh) rotate(360deg);
+      opacity: 0;
+    }
   }
 }
